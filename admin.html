@@ -115,6 +115,16 @@
       <div id="clones"></div>
       <div class="wm">build watermark: TOE-5C19E805BF10</div>
     </details>
+
+    <details class="panel" id="pwPanel">
+      <summary><h2>change password</h2></summary>
+      <label for="pwNew">new password</label>
+      <input type="password" id="pwNew" autocomplete="new-password">
+      <label for="pwNew2" style="margin-top:12px">type it again</label>
+      <input type="password" id="pwNew2" autocomplete="new-password">
+      <div class="row"><button class="solid" id="pwSave">change password</button><button id="signOut">sign out</button></div>
+      <p class="note" id="pwNote">at least 8 characters. the old password stops working straight away.</p>
+    </details>
   </div>
 </div>
 <div id="toast" role="status"></div>
@@ -152,6 +162,7 @@ function render() {
   $('preview').innerHTML = `site shows: <b>${s.showing ? esc(s.ca) : 'ca: coming soon'}</b>${s.chart && s.showing ? `<br>chart: <b>${esc(s.chart)}</b>` : ''}`;
   $('force').setAttribute('aria-pressed', String(!!s.forceLive));
   $('checkNow').disabled = !s.ca || s.live; $('clearCa').disabled = !s.ca;
+  $('pwNote').textContent = 'at least 8 characters. the old password stops working straight away.' + (s.pwChangedAt ? ` last changed ${ago(s.pwChangedAt)} ago.` : '');
   $('tProt').setAttribute('aria-pressed', String(s.protector !== false));
   $('tDet').setAttribute('aria-pressed', String(s.deterrents !== false));
   if (document.activeElement !== $('hosts')) $('hosts').value = (s.allowedHosts || []).join('\n');
@@ -189,6 +200,17 @@ $('clones').addEventListener('click', async e => {
   if (r) { try { await navigator.clipboard.writeText(report(r.dataset.report)); toast('report copied'); } catch { toast('copy failed', true); } }
   if (f) { try { await call('forgetClone', { host: f.dataset.forget }); } catch (err) { toast(err.message, true); } }
 });
+$('pwSave').onclick = async () => {
+  const a = $('pwNew').value, b = $('pwNew2').value;
+  if (a.length < 8) return toast('at least 8 characters', true);
+  if (a !== b) return toast("passwords don't match", true);
+  try {
+    await call('changePassword', { next: a });
+    key = a; try { sessionStorage.setItem('toeAdmin', key); } catch {}
+    $('pwNew').value = $('pwNew2').value = ''; toast('password changed');
+  } catch (e) { toast(e.message, true); }
+};
+$('signOut').onclick = () => { signOut(); $('pw').value = ''; };
 if (key) call('get').then(() => { $('login').hidden = true; $('app').hidden = false; }).catch(() => {});
 setInterval(() => { if (key && !$('app').hidden) call('get').catch(() => {}); }, 15000);
 </script>

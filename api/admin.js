@@ -1,17 +1,24 @@
-import { timingSafeEqual, createHash } from 'node:crypto';
+import { timingSafeEqual, createHash, scryptSync, randomBytes } from 'node:crypto';
 import { readState, writeState, readBody, isMint, checkLive } from '../lib/store.js';
 
 const hash = v => createHash('sha256').update(String(v || '')).digest();
-const authed = req => !!process.env.ADMIN_PASSWORD && timingSafeEqual(hash(req.headers['x-admin-key']), hash(process.env.ADMIN_PASSWORD));
-const view = s => ({ ...s, showing: !!s.ca && (s.live || s.forceLive) });
+// a password changed from the admin page is stored as a salted scrypt hash and replaces ADMIN_PASSWORD
+const scrypt = (pw, salt) => scryptSync(String(pw || ''), Buffer.from(salt, 'hex'), 32);
+function authed(req, s) {
+  const given = String(req.headers['x-admin-key'] || '');
+  if (s.pw && s.pw.salt && s.pw.hash) return timingSafeEqual(scrypt(given, s.pw.salt), Buffer.from(s.pw.hash, 'hex'));
+  return !!process.env.ADMIN_PASSWORD && timingSafeEqual(hash(given), hash(process.env.ADMIN_PASSWORD));
+}
+const view = s => { const { pw, ...rest } = s; return { ...rest, showing: !!s.ca && (s.live || s.forceLive), pwChangedAt: pw?.at || null }; };
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
-  if (!authed(req)) { await new Promise(r => setTimeout(r, 600)); return res.status(401).json({ error: 'wrong password' }); }
+  let s;
+  try { s = await readState(); } catch (e) { return res.status(500).json({ error: 'storage error: ' + (e?.message || e) }); }
+  if (!authed(req, s)) { await new Promise(r => setTimeout(r, 600)); return res.status(401).json({ error: 'wrong password' }); }
   const b = await readBody(req);
   try {
-    let s = await readState();
     switch (b.action) {
       case 'get': break;
       case 'setCa': {
@@ -33,6 +40,14 @@ export default async function handler(req, res) {
         if (typeof b.protector === 'boolean') s.protector = b.protector;
         if (typeof b.deterrents === 'boolean') s.deterrents = b.deterrents;
         if (Array.isArray(b.allowedHosts)) s.allowedHosts = b.allowedHosts.map(h => String(h).toLowerCase().trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '')).filter(h => /^[a-z0-9*.\-]+$/.test(h)).slice(0, 50);
+        s = await writeState(s); break;
+      }
+      case 'changePassword': {
+        const next = String(b.next || '');
+        if (next.length < 8) return res.status(400).json({ error: 'new password needs at least 8 characters' });
+        if (next.length > 200) return res.status(400).json({ error: 'new password is too long' });
+        const salt = randomBytes(16).toString('hex');
+        s.pw = { salt, hash: scrypt(next, salt).toString('hex'), at: Date.now() };
         s = await writeState(s); break;
       }
       case 'forgetClone': delete s.clones[String(b.host || '')]; s = await writeState(s); break;
