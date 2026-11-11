@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>$toe admin</title>
+<style>
+  *{ box-sizing:border-box; margin:0; }
+  :root{ --bg:#06102a; --panel:rgba(14,26,54,.86); --line:rgba(255,255,255,.18); --dim:rgba(255,255,255,.6); --ok:#58ff9b; --warn:#ffd36b; --bad:#ff8aa0; }
+  body{ min-height:100vh; color:#fff; font:600 14px/1.45 "Neue Helvetica","Helvetica Neue",Helvetica,Arial,sans-serif;
+    background:radial-gradient(120% 80% at 50% -10%, #6fb3f0 0%, #2a5fae 32%, #0c1c40 66%, var(--bg) 100%) fixed; padding:48px 18px 80px; }
+  .wrap{ width:min(100%,720px); margin:0 auto; display:grid; gap:18px; }
+  h1{ font-weight:800; font-size:40px; line-height:.95; letter-spacing:.01em; }
+  h1 small{ display:block; margin-top:.5em; font-size:11px; letter-spacing:.24em; color:var(--dim); text-transform:uppercase; }
+  .panel{ background:var(--panel); border:1px solid rgba(255,255,255,.55); border-radius:2px; padding:24px;
+    box-shadow:1px 1px 0 rgba(255,255,255,.4), 2px 2px 0 rgba(255,255,255,.22), 0 18px 40px rgba(2,8,24,.45); backdrop-filter:blur(10px); }
+  h2{ font-size:13px; font-weight:800; letter-spacing:.14em; margin-bottom:1em; opacity:.9; }
+  p.note{ color:var(--dim); font-size:12px; margin-top:.8em; }
+  label{ display:block; font-size:10px; font-weight:800; letter-spacing:.16em; color:var(--dim); text-transform:uppercase; margin-bottom:.5em; }
+  input[type=text], input[type=password], textarea{ width:100%; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.4); border-radius:2px; color:#fff;
+    font:600 13px/1.4 ui-monospace,Menlo,Consolas,monospace; padding:.85em 1em; }
+  textarea{ min-height:96px; resize:vertical; }
+  input:focus, textarea:focus{ outline:2px solid #fff; outline-offset:1px; }
+  .row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  button{ border:1px solid rgba(255,255,255,.6); background:transparent; color:#fff; border-radius:2px; cursor:pointer;
+    font:800 10px/1 "Neue Helvetica","Helvetica Neue",Helvetica,Arial,sans-serif; letter-spacing:.16em; padding:1em 1.2em; text-transform:uppercase; }
+  button:hover{ background:rgba(255,255,255,.16); }
+  button.solid{ background:#fff; color:#0b1630; border-color:#fff; }
+  button.solid:hover{ box-shadow:0 0 22px rgba(255,255,255,.6); }
+  button:disabled{ opacity:.45; pointer-events:none; }
+  .status{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; padding:14px 16px; border:1px solid var(--line); border-radius:2px; background:rgba(255,255,255,.05); }
+  .pill{ display:inline-flex; align-items:center; gap:.55em; font-size:10px; font-weight:800; letter-spacing:.18em; padding:.55em .8em; border-radius:2px; text-transform:uppercase; }
+  .pill::before{ content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
+  .pill.live{ color:var(--ok); background:rgba(88,255,155,.12); } .pill.wait{ color:var(--warn); background:rgba(255,211,107,.12); } .pill.off{ color:var(--dim); background:rgba(255,255,255,.08); }
+  .pill.wait::before{ animation:blink 1.2s ease-in-out infinite; } @keyframes blink{ 50%{ opacity:.25; } }
+  .status .what{ color:var(--dim); font-size:12px; }
+  .preview{ margin-top:12px; font:600 12px/1.4 ui-monospace,Menlo,monospace; color:var(--dim); word-break:break-all; }
+  .preview b{ color:#fff; font-weight:600; }
+  .toggle{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0; border-top:1px solid var(--line); }
+  .toggle:first-of-type{ border-top:0; }
+  .toggle span small{ display:block; color:var(--dim); font-size:12px; font-weight:600; margin-top:2px; }
+  .sw{ position:relative; width:46px; height:26px; flex:none; border-radius:13px; border:1px solid rgba(255,255,255,.6); background:rgba(0,0,0,.3); padding:0; }
+  .sw::after{ content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:transform .18s ease; }
+  .sw[aria-pressed="true"]{ background:#fff; } .sw[aria-pressed="true"]::after{ transform:translateX(20px); background:#0b1630; }
+  table{ width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  th{ text-align:left; font-size:9px; font-weight:800; letter-spacing:.14em; color:var(--dim); text-transform:uppercase; padding:0 0 .7em; }
+  td{ padding:.65em 0; border-top:1px solid var(--line); vertical-align:top; }
+  td.host{ font-family:ui-monospace,Menlo,monospace; word-break:break-all; padding-right:10px; }
+  td.r{ text-align:right; white-space:nowrap; }
+  td .row{ margin-top:0; justify-content:flex-end; } td button{ padding:.7em .8em; font-size:9px; }
+  .empty{ color:var(--dim); font-size:12px; padding:8px 0; }
+  details summary{ cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; }
+  details summary::-webkit-details-marker{ display:none; }
+  details summary h2{ margin:0; }
+  details summary::after{ content:"+"; font-size:20px; font-weight:400; opacity:.7; }
+  details[open] summary::after{ content:"–"; }
+  details[open] summary{ margin-bottom:1em; }
+  .wm{ font:600 12px ui-monospace,Menlo,monospace; color:var(--dim); margin-top:14px; }
+  #toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); opacity:0; transition:.25s ease; background:#fff; color:#0b1630;
+    font-weight:800; font-size:12px; padding:.9em 1.2em; border-radius:2px; pointer-events:none; }
+  #toast.on{ opacity:1; transform:translateX(-50%); } #toast.err{ background:var(--bad); }
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>$toe admin<small>toeken · ca control</small></h1>
+
+  <section class="panel" id="login">
+    <h2>sign in</h2>
+    <label for="pw">admin password</label>
+    <input type="password" id="pw" autocomplete="current-password">
+    <div class="row"><button class="solid" id="go">open admin</button></div>
+  </section>
+
+  <div id="app" hidden>
+    <section class="panel">
+      <h2>contract address</h2>
+      <label for="ca">ca</label>
+      <input type="text" id="ca" spellcheck="false" placeholder="paste the ca before launch">
+      <div class="row">
+        <button class="solid" id="saveCa">save ca</button>
+        <button id="checkNow">check if live now</button>
+        <button id="clearCa">clear</button>
+      </div>
+      <div class="status">
+        <span class="pill off" id="pill">no ca</span>
+        <span class="what" id="what">add the ca. it stays hidden until the coin is live.</span>
+      </div>
+      <div class="preview" id="preview"></div>
+      <div class="toggle" style="margin-top:10px">
+        <span>show the ca now<small>skip live detection and put the ca on the site straight away</small></span>
+        <button class="sw" id="force" aria-pressed="false" aria-label="Show the ca now"></button>
+      </div>
+      <p class="note">the site checks every few seconds. once dexscreener or pump.fun shows the coin, the ca, buy and chart links switch on by themselves. no redeploy needed.</p>
+    </section>
+
+    <details class="panel" id="protect">
+      <summary><h2>site protection · clone watch</h2></summary>
+      <div class="toggle">
+        <span>clone protector<small>copies on other domains get replaced with a notice and sent to the real site</small></span>
+        <button class="sw" id="tProt" aria-pressed="true" aria-label="Clone protector"></button>
+      </div>
+      <div class="toggle">
+        <span>copy deterrents<small>blocks right-click, view-source and save shortcuts, and image dragging</small></span>
+        <button class="sw" id="tDet" aria-pressed="true" aria-label="Copy deterrents"></button>
+      </div>
+      <div style="margin-top:14px">
+        <label for="hosts">extra allowed domains · one per line</label>
+        <textarea id="hosts" spellcheck="false" placeholder="toeken.xyz"></textarea>
+        <div class="row"><button id="saveHosts">save domains</button></div>
+      </div>
+      <h2 style="margin-top:22px">clones seen</h2>
+      <div id="clones"></div>
+      <div class="wm">build watermark: %%WM%%</div>
+    </details>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+<script>
+const WM = '%%WM%%', OFFICIAL = '%%OFFICIAL%%';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ago = t => { if (!t) return ''; const s = Math.max(1, Math.round((Date.now() - t) / 1000)); return s < 60 ? s + 's' : s < 3600 ? Math.round(s / 60) + 'm' : s < 86400 ? Math.round(s / 3600) + 'h' : Math.round(s / 86400) + 'd'; };
+let key = ''; try { key = sessionStorage.getItem('toeAdmin') || ''; } catch {}
+let state = null;
+
+function toast(msg, err) { const t = $('toast'); t.textContent = msg; t.className = 'on' + (err ? ' err' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = '', 2200); }
+async function call(action, extra = {}) {
+  const r = await fetch('/api/admin', { method: 'POST', headers: { 'content-type': 'application/json', 'x-admin-key': key }, body: JSON.stringify({ action, ...extra }) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) { signOut(); throw new Error('wrong password'); }
+  if (!r.ok) throw new Error(j.error || 'something went wrong');
+  if (j.state) { state = j.state; render(); }
+  return j;
+}
+function signOut() { key = ''; try { sessionStorage.removeItem('toeAdmin'); } catch {} $('app').hidden = true; $('login').hidden = false; }
+async function signIn() {
+  key = $('pw').value.trim(); if (!key) return;
+  try { await call('get'); try { sessionStorage.setItem('toeAdmin', key); } catch {} $('login').hidden = true; $('app').hidden = false; }
+  catch (e) { toast(e.message, true); }
+}
+function render() {
+  const s = state; if (!s) return;
+  if (document.activeElement !== $('ca')) $('ca').value = s.ca || '';
+  const pill = $('pill'), what = $('what');
+  if (!s.ca) { pill.className = 'pill off'; pill.textContent = 'no ca'; what.textContent = 'add the ca. it stays hidden until the coin is live.'; }
+  else if (s.live) { pill.className = 'pill live'; pill.textContent = 'live'; what.textContent = `detected on ${s.liveSource || 'chain'} ${ago(s.liveAt)} ago. the ca is showing on the site.`; }
+  else if (s.forceLive) { pill.className = 'pill live'; pill.textContent = 'showing'; what.textContent = 'shown manually. still watching for launch.'; }
+  else { pill.className = 'pill wait'; pill.textContent = 'waiting for launch'; what.textContent = 'ca saved and hidden. the site will show it the moment the coin goes live.'; }
+  $('preview').innerHTML = `site shows: <b>${s.showing ? esc(s.ca) : 'ca: coming soon'}</b>${s.chart && s.showing ? `<br>chart: <b>${esc(s.chart)}</b>` : ''}`;
+  $('force').setAttribute('aria-pressed', String(!!s.forceLive));
+  $('checkNow').disabled = !s.ca || s.live; $('clearCa').disabled = !s.ca;
+  $('tProt').setAttribute('aria-pressed', String(s.protector !== false));
+  $('tDet').setAttribute('aria-pressed', String(s.deterrents !== false));
+  if (document.activeElement !== $('hosts')) $('hosts').value = (s.allowedHosts || []).join('\n');
+  const list = Object.entries(s.clones || {}).sort((a, b) => b[1].last - a[1].last);
+  $('clones').innerHTML = list.length ? `<table><thead><tr><th>domain</th><th class="r">seen</th><th class="r">hits</th><th></th></tr></thead><tbody>${list.map(([h, c]) =>
+    `<tr><td class="host">${esc(h)}${c.urls?.[0] ? `<br><span style="opacity:.6">${esc(c.urls[0])}</span>` : ''}</td><td class="r">${ago(c.first)} / ${ago(c.last)}</td><td class="r">${c.hits}</td>
+     <td class="r"><div class="row"><button data-report="${esc(h)}">copy report</button><button data-forget="${esc(h)}">forget</button></div></td></tr>`).join('')}</tbody></table>`
+    : '<div class="empty">no clones seen. if someone puts a copy up, it shows here.</div>';
+  if (list.length) $('protect').open = true;
+}
+function report(host) {
+  const c = state.clones[host] || {};
+  return `Copyright / impersonation report
+
+The website at ${c.urls?.[0] || 'https://' + host} is an unauthorized copy of our site ${OFFICIAL}.
+It reuses our code, artwork and branding and pretends to be the official $toe (toeken) site, which can mislead people into buying the wrong token.
+
+Proof of ownership: every build of our site carries the hidden watermark ${WM}. It is in the page source of the copy (HTML comment, a "toe-build" meta tag and the site script) and in our own deployment.
+First seen: ${new Date(c.first || Date.now()).toUTCString()}. Last seen: ${new Date(c.last || Date.now()).toUTCString()}.
+
+Please take the copy down. Official site: ${OFFICIAL}`;
+}
+
+$('go').onclick = signIn;
+$('pw').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
+$('saveCa').onclick = async () => { try { await call('setCa', { ca: $('ca').value.trim() }); toast(state.ca ? (state.live ? 'saved. coin is already live' : 'saved. hidden until launch') : 'cleared'); } catch (e) { toast(e.message, true); } };
+$('clearCa').onclick = async () => { if (!confirm('clear the ca from the site?')) return; try { await call('setCa', { ca: '' }); toast('cleared'); } catch (e) { toast(e.message, true); } };
+$('checkNow').onclick = async () => { try { const j = await call('check'); toast(j.found ? 'live. ca is on the site' : 'not live yet'); } catch (e) { toast(e.message, true); } };
+$('force').onclick = async () => { try { await call('forceLive', { value: !state.forceLive }); toast(state.forceLive ? 'ca is showing' : 'back to auto'); } catch (e) { toast(e.message, true); } };
+$('tProt').onclick = async () => { try { await call('settings', { protector: !(state.protector !== false) }); toast(state.protector ? 'protector on' : 'protector off'); } catch (e) { toast(e.message, true); } };
+$('tDet').onclick = async () => { try { await call('settings', { deterrents: !(state.deterrents !== false) }); toast(state.deterrents ? 'deterrents on' : 'deterrents off'); } catch (e) { toast(e.message, true); } };
+$('saveHosts').onclick = async () => { try { await call('settings', { allowedHosts: $('hosts').value.split(/\s+/).filter(Boolean) }); toast('domains saved'); } catch (e) { toast(e.message, true); } };
+$('clones').addEventListener('click', async e => {
+  const r = e.target.closest('[data-report]'), f = e.target.closest('[data-forget]');
+  if (r) { try { await navigator.clipboard.writeText(report(r.dataset.report)); toast('report copied'); } catch { toast('copy failed', true); } }
+  if (f) { try { await call('forgetClone', { host: f.dataset.forget }); } catch (err) { toast(err.message, true); } }
+});
+if (key) call('get').then(() => { $('login').hidden = true; $('app').hidden = false; }).catch(() => {});
+setInterval(() => { if (key && !$('app').hidden) call('get').catch(() => {}); }, 15000);
+</script>
+</body>
+</html>

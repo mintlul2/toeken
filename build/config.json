@@ -1,0 +1,10 @@
+{
+  "official": "https://toeken-rho.vercel.app",
+  "watermark": "TOE-5C19E805BF10",
+  "allowedHosts": [
+    "toeken-rho.vercel.app",
+    "toeken-*-mint-76f2.vercel.app",
+    "toeken-mint-76f2.vercel.app",
+    "toeken-git-*-mint-76f2.vercel.app"
+  ]
+}
