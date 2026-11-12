@@ -1,5 +1,5 @@
 import { timingSafeEqual, createHash, scryptSync, randomBytes } from 'node:crypto';
-import { readState, writeState, readBody, isMint, checkLive } from '../lib/store.js';
+import { readState, writeState, readBody, isMint, checkLive, countHolders } from '../lib/store.js';
 
 const hash = v => createHash('sha256').update(String(v || '')).digest();
 // a password changed from the admin page is stored as a salted scrypt hash and replaces ADMIN_PASSWORD
@@ -50,6 +50,7 @@ export default async function handler(req, res) {
         s.pw = { salt, hash: scrypt(next, salt).toString('hex'), at: Date.now() };
         s = await writeState(s); break;
       }
+      case 'holdersTest': { const t0 = Date.now(); try { return res.status(200).json({ n: await countHolders(String(b.ca || s.ca)), ms: Date.now() - t0 }); } catch (e) { return res.status(200).json({ error: String(e.message || e), ms: Date.now() - t0 }); } }
       case 'forgetClone': delete s.clones[String(b.host || '')]; s = await writeState(s); break;
       default: return res.status(400).json({ error: 'unknown action' });
     }
